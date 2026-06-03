@@ -1,46 +1,16 @@
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:provider/provider.dart';
+import '../providers/auth_provider.dart';
 import 'login_page.dart';
 
-class HomePage extends StatefulWidget {
+class HomePage extends StatelessWidget {
   const HomePage({super.key});
 
   @override
-  State<HomePage> createState() => _HomePageState();
-}
-
-class _HomePageState extends State<HomePage> {
-  String username = '';
-
-  @override
-  void initState() {
-    super.initState();
-    getUser();
-  }
-
-  // Mengambil data username dari SharedPreferences
-  Future<void> getUser() async {
-    final prefs = await SharedPreferences.getInstance();
-    setState(() {
-      username = prefs.getString('username') ?? '';
-    });
-  }
-
-  // Fungsi untuk logout dan menghapus semua data di SharedPreferences
-  Future<void> logout() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.clear();
-
-    if (mounted) {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => const LoginPage()),
-      );
-    }
-  }
-
-  @override
   Widget build(BuildContext context) {
+    // Mengambil data username dari Provider
+    final authProvider = context.watch<AuthProvider>();
+
     return Scaffold(
       backgroundColor: const Color(0xFFF5F6FA),
       body: SafeArea(
@@ -72,7 +42,7 @@ class _HomePageState extends State<HomePage> {
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisAlignment: MainAxisAlignment.center, // Menyeimbangkan posisi vertikal text
+                    mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Text(
                         "Hai, Selamat Datang!",
@@ -82,7 +52,7 @@ class _HomePageState extends State<HomePage> {
                       Row(
                         children: [
                           Text(
-                            username,
+                            authProvider.username, // Data username dari provider
                             style: const TextStyle(
                               fontSize: 22,
                               fontWeight: FontWeight.bold,
@@ -100,7 +70,16 @@ class _HomePageState extends State<HomePage> {
                   ),
                 ),
                 GestureDetector(
-                  onTap: logout,
+                  onTap: () async {
+                    // Panggil fungsi logout milik provider
+                    await context.read<AuthProvider>().logout();
+                    if (context.mounted) {
+                      Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(builder: (context) => const LoginPage()),
+                      );
+                    }
+                  },
                   child: Container(
                     padding: const EdgeInsets.all(10),
                     decoration: BoxDecoration(

@@ -1,41 +1,29 @@
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:provider/provider.dart';
+import 'providers/auth_provider.dart';
 import 'pages/home_page.dart';
 import 'pages/login_page.dart';
 
 void main() {
-  runApp(const MyApp());
+  runApp(
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => AuthProvider()..checkLoginCheck()),
+      ],
+      child: const MyApp(),
+    ),
+  );
 }
 
-class MyApp extends StatefulWidget {
+class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
   @override
-  State<MyApp> createState() => _MyAppState();
-}
-
-class _MyAppState extends State<MyApp> {
-  bool isLogin = false;
-  bool isLoading = true;
-
-  @override
-  void initState() {
-    super.initState();
-    checkLogin();
-  }
-
-  // Memeriksa status login saat aplikasi pertama kali dibuka
-  Future<void> checkLogin() async {
-    final prefs = await SharedPreferences.getInstance();
-    setState(() {
-      isLogin = prefs.getBool('isLogin') ?? false;
-      isLoading = false;
-    });
-  }
-
-  @override
   Widget build(BuildContext context) {
-    if (isLoading) {
+    // Menggunakan context.watch untuk memantau perubahan status di AuthProvider
+    final authProvider = context.watch<AuthProvider>();
+
+    if (authProvider.isLoading) {
       return const MaterialApp(
         home: Scaffold(
           body: Center(
@@ -47,7 +35,7 @@ class _MyAppState extends State<MyApp> {
 
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      home: isLogin ? const HomePage() : const LoginPage(),
+      home: authProvider.isLogin ? const HomePage() : const LoginPage(),
     );
   }
 }
